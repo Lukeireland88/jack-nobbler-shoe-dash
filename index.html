@@ -45,11 +45,12 @@ $('submitScore').addEventListener('submit',async e=>{e.preventDefault();if(submi
   if(window.parent===window)return;
   const targetOrigin='*';
   let last=0;
-  function report(){
+  function report(force){
     const root=document.querySelector('.wrap');
     const h=Math.ceil(root.getBoundingClientRect().bottom + window.scrollY);
-    if(h!==last){last=h;window.parent.postMessage({type:'tcp-shoe-dash-height',height:h},targetOrigin);}
+    if(force===true||h!==last){last=h;window.parent.postMessage({type:'tcp-shoe-dash-height',height:h},targetOrigin);}
   }
+  window.addEventListener('message',function(event){if(event.source===window.parent && event.data && event.data.type==='tcp-shoe-dash-request-height')report(true);});
   window.addEventListener('load',report);
   window.addEventListener('resize',report);
   if(window.ResizeObserver)new ResizeObserver(report).observe(document.querySelector('.wrap'));
