@@ -40,4 +40,19 @@ html.in-iframe .wrap{padding:4px}
 const base='https://firestore.googleapis.com/v1/projects/charityplayers/databases/(default)/documents';
 async function refreshGlobal(){const list=$('globalScores');try{const resp=await fetch(base+':runQuery?key='+encodeURIComponent(apiKey),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:'shoeDashScores'}],orderBy:[{field:{fieldPath:'score'},direction:'DESCENDING'}],limit:10}})});if(!resp.ok)throw new Error('Could not load');const rows=await resp.json();list.replaceChildren();const valid=rows.filter(x=>x.document&&x.document.fields);if(!valid.length){const li=document.createElement('li');li.textContent='Be the first to add a score!';list.append(li)}else for(const row of valid){const f=row.document.fields,li=document.createElement('li');li.textContent=(f.name?.stringValue||'Player')+' — '+(f.score?.integerValue||'0')+' points';list.append(li)}$('leaderStatus').textContent=''}catch(e){list.replaceChildren();const li=document.createElement('li');li.textContent='Leaderboard unavailable';list.append(li);$('leaderStatus').textContent='Please try again later.'}}
 $('submitScore').addEventListener('submit',async e=>{e.preventDefault();if(submitted||lastScore===null)return;const name=$('playerName').value.trim();if(!/^[A-Za-z0-9 _-]{1,20}$/.test(name)){$('submitStatus').textContent='Use 1–20 letters, numbers, spaces, hyphens or underscores.';return}$('submitButton').disabled=true;$('submitStatus').textContent='Submitting…';try{const resp=await fetch(base+'/shoeDashScores?key='+encodeURIComponent(apiKey),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{name:{stringValue:name},score:{integerValue:String(lastScore)}}})});if(!resp.ok)throw new Error('Failed');submitted=true;$('submitStatus').textContent='Your score has been submitted!';refreshGlobal()}catch(e){$('submitStatus').textContent='Could not submit. Please try again.';$('submitButton').disabled=false}});refreshGlobal();$('start').addEventListener('click',start);$('again').addEventListener('click',start);leaderboard()})();
+</script><script>
+(function(){
+  if(window.parent===window)return;
+  const targetOrigin='https://thecharityplayers.co.uk';
+  let last=0;
+  function report(){
+    const h=Math.ceil(document.documentElement.scrollHeight);
+    if(h!==last){last=h;window.parent.postMessage({type:'tcp-shoe-dash-height',height:h},targetOrigin);}
+  }
+  window.addEventListener('load',report);
+  window.addEventListener('resize',report);
+  if(window.ResizeObserver)new ResizeObserver(report).observe(document.querySelector('.wrap'));
+  if(window.MutationObserver)new MutationObserver(report).observe(document.body,{childList:true,subtree:true,characterData:true});
+  report();
+})();
 </script></body></html>
